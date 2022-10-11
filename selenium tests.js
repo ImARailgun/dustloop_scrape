@@ -25,7 +25,7 @@ async function selenTest(character) {
    //loop through table IDs until no more tables are found
    for (let tableNum = 0; tableNum < tableHeaders.length; tableNum++) {
       const tableID = `DataTables_Table_${String(tableNum)}`;
-      const tableName = tableHeaders[tableNum + 3];
+
       //tableHeaders.length is arbitrary. Once there are no more tables to scrape,
       //the findElement() below will throw an error when "DataTables_Table_i" doesnt exist
       let TableNode;
@@ -37,6 +37,7 @@ async function selenTest(character) {
       }
 
       //table name is sometimes undefined without this console log
+      var tableName = tableHeaders[tableNum + 3];
       console.log(tableName);
 
       characterObj[tableName] = {};
@@ -48,11 +49,17 @@ async function selenTest(character) {
 
       //saving collumn headers
       const columnHeaders = [];
-      columnNodes.forEach(async (node) => {
-         await node.getText().then((text) => {
-            columnHeaders.push(text);
-         });
-      });
+
+      for (const node of columnNodes) {
+         let header = "";
+         header = await node.getText();
+         columnHeaders.push(header);
+      }
+      // columnNodes.forEach(async (node) => {
+      //    await node.getText().then((text) => {
+      //       columnHeaders.push(text);
+      //    });
+      // });
 
       //getting all row nodes for the table
       var rowNodes = await TableNode.findElement(By.css("tbody")).findElements(
@@ -91,6 +98,8 @@ async function selenTest(character) {
 
          //adding the row to the table object
          characterObj[tableName][rowObjKey] = scrapedInfo;
+         //uncomment line below to log each row in it's entirety instead of just a list of row keys
+         //console.log(JSON.stringify(scrapedInfo, null, 2));
       }
 
       console.log(
@@ -125,8 +134,7 @@ const parseforHref = (string) => {
 
 //buid a scraper for all character names, then loop throught them
 selenTest("Millia_Rage");
-selenTest("Baiken");
-
-selenTest("Zappa");
+// selenTest("Baiken");
+// selenTest("Zappa");
 
 //stretch goal: system data, gattlings
