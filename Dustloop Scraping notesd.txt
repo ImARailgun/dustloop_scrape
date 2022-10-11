@@ -1,0 +1,79 @@
+Steps: 
+
+sequence everything with .then()?
+    
+    //get to main page
+    driver.get(`https://www.dustloop.com/w/GGACR/${characterName}`);
+
+    //click on 'Full Frame Data'
+    driver.findElement(By.xpath(.//*[text()[contains(.,"Full Frame Data")]]))
+        .click();
+
+    //alternatively, can just start there
+    driver.get(`https://www.dustloop.com/w/GGACR/${characterName}/Frame_Data`)
+
+    
+    actual good way of getting correct table:
+        -find the element that has id for 'System Data'. 'Normal Moves', etc.
+            var titleLabel = driver.findElement(driver.By.id(Normal_Moves))
+        -move up to the parent h2
+            var parentH2 = titleLabel.findElement(By.xpath(.//*//parent:h2))
+        -find next sibling div with a table 
+            var NormalMoveTableDiv = parentH2.findElement(By.xpath(.//*/sibling:div[@id="DataTables_Table_0_wrapper"]))
+        -find table (<table>)
+            var NormalTable = 
+        -find <tbody>
+        -find <tr>
+    good way of getting the correct table: use the better way
+            -find the element that has text for 'System Data'. 'Normal Moves', etc.
+                driver.By.xpath(.//*[text()[contains(.,"Normal Moves")]])
+            -move up to the parent h2
+                driver.By.xpath(.//*[text()[contains(.,"Normal Moves")]]//parent:h2)
+            -find the next table sibling following that:
+                driver.By.xpath(.//*[text()[contains(.,"Normal Moves")]]//parent:h2/following-sibling::table)
+
+    bad way: use the good way
+        -add all table elements to an array
+        -assume all dustloop pages have the same number and order of tables
+
+
+
+
+ var titleLabel = await driver.findElement(By.id("Normal_Moves"));
+
+   var normalTable = await titleLabel.findElement(By.xpath("../sibling"));
+
+   console.log(JSON.stringify(normalTable, null, 2));
+
+   // await normalTable.getId().then((e) => console.log(e));
+
+   // var millia_5P = await normalTable
+   //    .findElement(By.css("tr"))
+   //    .getCssValue("data-details")
+   //    .then((e) => console.log(e));
+
+
+
+
+
+
+
+
+
+
+
+hitbox image: <tr data-details='(contains href for img)'>
+    -save string and then parse for 2nd img href
+    -url = 'dustloop.com' + href
+    href = '/wiki/images/thumb/f/fd/GGXXACPR_Millia_5P-Hitbox.png/180px-GGXXACPR_Millia_5P-Hitbox.png'
+
+
+
+
+
+// var frameDataXPATH = `.//*[text()[contains(.,"Full Frame Data")]]`;
+// await driver.findElement(By.xpath(frameDataXPATH)).click();
+    
+    
+    
+    

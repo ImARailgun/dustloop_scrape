@@ -1,0 +1,175 @@
+Questions:
+    -Firefox probably best? won't have to worry about LegacyActionSequence being depreciated in the future?
+        -current action sequence only adds functions so maybe this is a non-issue
+    -Executors are just predetermined set of actions?
+    -Is .executeAsyncScript mandatory for what I am trying to do?
+    -how do I open a new window? 
+        -is it just driver.get()? 
+        -and driver.navigation.to() for going to a url without opening a new window?
+
+
+Install: 
+    npm install selenium-webdriver
+
+Additional componentes to work with each of the major browsers?
+    https://www.selenium.dev/selenium/docs/api/javascript/index.html
+    "The drivers for Chrome, Firefox, and Microsoft's IE and Edge web browsers are all standalone executables that should be placed on your system PATH."
+    -not really sure what this part means
+        -do you download the driver and just install it?
+        -or do you download the files and place them in your project folder?
+
+Remote/standalone server:
+    -probably not applicable
+    -not sure about implacations for AWS instances or using selenium across multiple devices
+
+Builder 
+    -to create new web driver
+    -can set options for different browsers
+    -example:
+        var driver = new webdriver.Builder()
+            .forBrowser('chrome')
+            .build();
+
+Web Driver
+    -actions to control a browser session
+
+    driver.(one of the following):
+
+    Actions
+        -specify a sequence of actions, and then use .perform() to execute them
+        -all actions are async (will wait for previous action to finish)
+        -some actions affect keyboard (keyDown, keyUp, ect.)
+        -some affect mouse (press, move, release, etc.)
+        -keyboard and mouse will wait for eachother by default
+            -can be changed with `drivers.action({async: true})
+                -now you have to insert pause() to correctly sync mouse and keyboard
+                -not the kind of optimization I think I should bother with
+        -chrome hasnt updated it's API yet, so need to use legacy action sequence https://www.selenium.dev/selenium/docs/api/javascript/module/selenium-webdriver/lib/actions_exports_LegacyActionSequence.html
+        -example:
+            const actions = driver.actions();
+
+            await actions
+                .keyDown(SHIFT)
+                .move({origin: el})
+                .press()
+                .release()
+                .keyUp(SHIFT)
+                .perform();
+
+    .close()
+        -close current window
+    .executeScript(script, args) - args can be webElements (found .findElemnts())
+        -executes in context of browser window (i.e. `document` refers to current document)
+        -runs as a promise (i.e. works with .then())
+    .executeAsyncScript(script, args)
+        -not entirely sure how to utilize this (confused by this "This callback will always be injected into the executed function as the last argument, and thus may be referenced with arguments[arguments.length - 1]")
+        -seems like it is used to make requests outside of your webdriver instances
+            -maybe necessary for Puppeteer? ***************
+            -not sure the exact order of their interactions (i.e. am I using Puppeteer to interact with Selenium or visa versa)
+            -especially when .executeScript can utilize .then(), not sure exactly when .executeAsyncScript is necessary
+    .findElement(By.(see by section))
+        -use By to find a single element
+        -returns first element that matches search
+        -example: 
+            driver.findElement(By.className(name))
+    .findElements
+        -search for multiple elements
+        -pretty sure this will return all elements that match search, but need to test
+    .get(url)
+        -navigate to a given URL
+    .getCurrentURL()
+        -returns URL as a string
+    Manage
+        driver.manage().deleteAllCookies()
+            -self explanatory
+        driver.manage().window()
+            .fullscreen()/maximize()/minimize()/etc.
+        -will need to test exactlty when to invoke (). the examples above feel like they have too many ()'s
+    .getTitle()
+        -returns current page title
+    .quit() 
+        -Terminates the browser session.
+    Navigation
+        driver.navigate
+            -.back()
+            -.forward()
+            -.refresh()
+            -.to(url)
+                -not sure difference between this and driver.get(url)?
+    .wait(condition, timeout, message)
+        -can be used to wait for a particular element to load
+            -alternative to actions.pause()
+        -syntax looks weird:
+            -waiting for a button to be present for 10 seconds:
+                 async function example() {
+                    let button =
+                        await driver.wait(until.elementLocated(By.id('foo')), 10000);
+                    await button.click();
+                    } 
+
+By
+    -used to locate a specific element on a page
+    -driver.findElements(By.className(name))
+    examples:
+        -By.className(name)
+            locates elements with a specific class name
+        -By.js(script, args)
+           "Locates an elements by evaluating a JavaScript expression. The result of this expression must be an element or list of elements."
+           need to look at an example
+        -etc. check link
+            https://www.selenium.dev/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_By.html    
+
+
+
+WebElement
+    -for interacting with WebElements outside of mouse and keyboard actions()
+    (found web element).(one of the following)
+        .clear()
+            -clear value of the element
+        .click()
+            -click on element
+        .findElement(locator (see By section))
+            -finding a descendent of the element
+            -can also write customer locator functions: 
+            //returns first visible link (not all links are visible)
+                var link = element.findElement(firstVisibleLink);
+                
+                function firstVisibleLink(element) {
+                    var links = element.findElements(By.tagName('a'));
+                    return promise.filter(links, function(link) {
+                        return link.isDisplayed();
+                    });
+                }
+        .findElements()
+        .getAttribute(attributeName)
+            -returns value of a given attributeName
+        .getCssValue(cssStyleProperty)
+            -returns the value of a css style cssStyleProperty
+            -if none is specified for this element, it queries the parent
+        .getText()
+            -get visible text (not hidden by CSS)
+            -It took 3.5 hours to get to this point ....
+        .isDisplayed()/.isEnabled()/.isSelected()
+            -return bools
+        .sendKeys(...args)
+            -types a sequence of keys
+            -SHIFT/CNTL/ALT/WINDOWS keys are toggled
+        .takeScreenshot()
+            -takes screenshot of the rectangle bounding the element 
+            -probably wont use this over just finding the <img src='url'>
+
+Capabilities
+    -to set capabilities of a web driver session
+    -proxies, alert behaviors, browser names/versions, page load strategies, logging preferences, etc.
+    -probably n/a for me?
+
+Condition
+    -class for specifying a condition to be used in driver.wait()
+    -probably n/a
+
+File Detector
+    -interacting with <input type=file>
+    -n/a
+
+Session
+    -getters for info about the current Session
