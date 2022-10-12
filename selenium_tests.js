@@ -85,6 +85,9 @@ async function selenTest(character) {
 
 //CREATE SEPERATE FUNCTION FOR ABA
 
+/**
+ * main is the test case. Uncomment all characters if you want to blow up your CPU
+ */
 const main = async () => {
    const charNames = [
       // "A.B.A",
@@ -128,6 +131,9 @@ const main = async () => {
 
 main();
 
+/**
+ * assignTableHeaders uses the driver to get the text from all h2 nodes, and returns an array of those strings.
+ */
 const assignTableHeaders = async (driver) => {
    //getting table header nodes
    const h2Nodes = await driver.findElements(By.css("h2"));
@@ -137,6 +143,9 @@ const assignTableHeaders = async (driver) => {
    return Promise.all(headerPromises);
 };
 
+/**
+ * getColumnHeaders returns an array of column headers for a given table node.
+ */
 const getColumnHeaders = async (tableNode) => {
    const columnNodes = await tableNode
       .findElement(By.css("tr"))
@@ -147,6 +156,9 @@ const getColumnHeaders = async (tableNode) => {
    return Promise.all(header);
 };
 
+/**
+ * scrapeRow returns an array with every cell in the row scraped in the following format: [columnHeader, cellData]
+ */
 const scrapeRow = async (row, tableName, columnHeaders) => {
    const scrapedInfo = [];
 
