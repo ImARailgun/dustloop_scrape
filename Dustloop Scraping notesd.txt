@@ -75,5 +75,36 @@ hitbox image: <tr data-details='(contains href for img)'>
 // await driver.findElement(By.xpath(frameDataXPATH)).click();
     
     
+
+
+
+
+
+
+
+    REQUESTING Data
+
+    full frame data:
+    Input: 5P
+        -if input length is greater than 2, search special moves, and IKs, and Overdrives, and Force Breaks
+    Name: 
+        -regardless of capitals
+
+    list of moves:
+    have a command that lists all categories (returns: "normal moves", "special moves", etc. )
+    have a command that returns a list of all Normal moves (5P, 5K, etc.), and special move inputs + names, and Overdrives, etc.
+
+    for ABA, say that you can request Regular Normals, Moroha Normals, etc.
+
+    that way you can request that, then request the full frame data for a specific input
+
+
+
+
+
+API hosting: fly.io? railway
+
+
+
     
     
