@@ -106,5 +106,21 @@ API hosting: fly.io? railway
 
 
 
+Millia {
+    Normal_Moves: {
+                5P: {
+                    Image: url;
+                    Input: 5P;
+                    Damage: 18;
+                    ...
+                }
+                    }
+
+
+
+}
+
+
+5P: [[Image,url], [input, 5P]]
     
     

@@ -71,12 +71,12 @@ async function selenTest(character) {
       for (const scrapedInfo of rows) {
          // assigning a row's object key to the move name (or input if no name)
          const rowObjKey =
-            scrapedInfo[2][0] === "name" && scrapedInfo[2][1] !== ""
-               ? scrapedInfo[2][1]
-               : scrapedInfo[1][1];
+            scrapedInfo.name && scrapedInfo.name !== ""
+               ? scrapedInfo.name
+               : scrapedInfo.input;
 
          // adding the row to the table object
-         const tableName = scrapedInfo.pop();
+         const tableName = scrapedInfo.tableName;
 
          characterObj[tableName][rowObjKey] = scrapedInfo;
       }
@@ -93,10 +93,10 @@ async function selenTest(character) {
  */
 const main = async () => {
    const charNames = [
-      // "A.B.A",
-      // "Anji_Mito",
-      // "Axl_Low",
-      // "Baiken",
+      "A.B.A",
+      "Anji_Mito",
+      "Axl_Low",
+      "Baiken",
       // "Bridget",
       // "Chipp_Zanuff",
       // "Dizzy",
@@ -108,11 +108,11 @@ const main = async () => {
       // "Justice",
       // "Kliff_Undersn",
       // "Ky_Kiske",
-      "May",
+      // "May",
       "Millia_Rage",
-      "Order-Sol",
-      "Potemkin",
-      "Robo-Ky",
+      // "Order-Sol",
+      // "Potemkin",
+      // "Robo-Ky",
       // "Slayer",
       // "Sol_Badguy",
       // "Testament",
@@ -169,11 +169,11 @@ const getColumnHeaders = async (tableNode) => {
  * scrapeRow returns an array with every cell in the row scraped in the following format: [columnHeader, cellData]
  */
 const scrapeRow = async (row, tableName, columnHeaders) => {
-   const scrapedInfo = [];
+   const scrapedInfo = {};
 
    // saving the image url (located within a css attribute, not displayed on page load)
    const rowDetails = await row.getAttribute("data-details");
-   scrapedInfo.push(["Image", parseforHref(rowDetails)]);
+   scrapedInfo.Image = parseforHref(rowDetails);
 
    // saving nodes for all cells in a row
    const moveInfo = await row.findElements(By.css("td"));
@@ -185,13 +185,13 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
    // getting text from each cell node, and saving it with the appropriate collumn header
    for (const text of texts) {
       if (columnIndex !== 0) {
-         scrapedInfo.push([columnHeaders[columnIndex], text]);
+         scrapedInfo[columnHeaders[columnIndex]] = text;
       }
 
       columnIndex++;
    }
 
-   scrapedInfo.push(tableName);
+   scrapedInfo.tableName = tableName;
    return scrapedInfo;
 };
 
@@ -202,18 +202,30 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
 const parseforHref = (string) => {
    const arr = string.split(" ");
 
-   const imgURLs = [];
+   const imgURLs = {};
+   const hitboxUrls = [];
    let oddURLsOnly = true;
+   let firstUrl = true;
    for (const str of arr) {
       if (/^src/.test(str)) {
          if (oddURLsOnly) {
-            imgURLs.push(`https://dustloop.com${str.slice(5, str.length - 1)}`);
+            if (firstUrl) {
+               imgURLs.noHitbox = `https://dustloop.com${str.slice(
+                  5,
+                  str.length - 1
+               )}`;
+               firstUrl = !firstUrl;
+            } else {
+               hitboxUrls.push(
+                  `https://dustloop.com${str.slice(5, str.length - 1)}`
+               );
+            }
          }
          oddURLsOnly = !oddURLsOnly;
       }
    }
 
+   imgURLs.hitbox = hitboxUrls;
+
    return imgURLs;
 };
-
-// stretch goal: system data, gattlings
