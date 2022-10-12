@@ -13,5 +13,6 @@ only for +r atm
 4. create a discord bot to call API and display retrieved frame data
 
 5. add functionality for Xrd and Strive
+   -just change URL from 'GGACR' to 'GGXRD-R2' (it's that easy)
 
 (stretch goal: system data, gattlings)

@@ -93,10 +93,10 @@ async function selenTest(character) {
  */
 const main = async () => {
    const charNames = [
-      "A.B.A",
-      "Anji_Mito",
-      "Axl_Low",
-      "Baiken",
+      // "A.B.A",
+      // "Anji_Mito",
+      // "Axl_Low",
+      // "Baiken",
       // "Bridget",
       // "Chipp_Zanuff",
       // "Dizzy",
