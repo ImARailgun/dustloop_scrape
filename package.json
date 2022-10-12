@@ -1,7 +1,12 @@
 {
+  "name": "dustloop_scrape",
+  "license": "MIT",
+  "scripts": {
+    "start": "node selenium_tests.js"
+  },
   "dependencies": {
-    "eslint": "^8.25.0",
     "prettier": "^2.7.1",
     "selenium-webdriver": "^4.5.0"
-  }
+  },
+  "type": "module"
 }
