@@ -6,6 +6,8 @@ const { By } = webdriver;
 async function selenTest(character) {
    const options = new chrome.Options();
    options.addArguments("--headless");
+   options.addArguments("log-level=3");
+
    const driver = new webdriver.Builder()
       .forBrowser("chrome")
       .setChromeOptions(options)
@@ -21,7 +23,7 @@ async function selenTest(character) {
    await driver.sleep(1000);
 
    //list of h2 elements
-   const tableHeaders = await assignTableHeaders(driver);
+   const tableHeaders = await assignTableHeaders(driver, character);
 
    // loop through table IDs until no more tables are found
    const tablePromises = tableHeaders.map(async (_, tableNum) => {
@@ -69,9 +71,10 @@ async function selenTest(character) {
       for (const scrapedInfo of rows) {
          // assigning a row's object key to the move name (or input if no name)
          const rowObjKey =
-            scrapedInfo[2][0] === "name"
+            scrapedInfo[2][0] === "name" && scrapedInfo[2][1] !== ""
                ? scrapedInfo[2][1]
                : scrapedInfo[1][1];
+
          // adding the row to the table object
          const tableName = scrapedInfo.pop();
 
@@ -91,7 +94,7 @@ async function selenTest(character) {
 const main = async () => {
    const charNames = [
       // "A.B.A",
-      "Anji_Mito",
+      // "Anji_Mito",
       // "Axl_Low",
       // "Baiken",
       // "Bridget",
@@ -106,7 +109,7 @@ const main = async () => {
       // "Kliff_Undersn",
       // "Ky_Kiske",
       // "May",
-      // "Millia_Rage",
+      "Millia_Rage",
       // "Order-Sol",
       // "Potemkin",
       // "Robo-Ky",
@@ -134,13 +137,22 @@ main();
 /**
  * assignTableHeaders uses the driver to get the text from all h2 nodes, and returns an array of those strings.
  */
-const assignTableHeaders = async (driver) => {
+const assignTableHeaders = async (driver, character) => {
    //getting table header nodes
+
+   if (character === "A.B.A") {
+      const headlineNodes = await driver.findElements(
+         By.className("mw-headline")
+      );
+      const headlinePromises = headlineNodes.map((elem) => elem.getText());
+      return Promise.all(headlinePromises);
+   }
+
    const h2Nodes = await driver.findElements(By.css("h2"));
    const headerPromises = h2Nodes.map((elem) => elem.getText());
+   return Promise.all(headerPromises);
 
    //creating array of table headers
-   return Promise.all(headerPromises);
 };
 
 /**
@@ -178,6 +190,7 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
       if (columnIndex !== 0) {
          scrapedInfo.push([columnHeaders[columnIndex], text]);
       }
+
       columnIndex++;
    }
 
@@ -185,9 +198,10 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
    return scrapedInfo;
 };
 
-// data-details css attribute is a string with a ton of information used when the row is expanded to display an image of the move
-// this function parses the string for the stored src attribute which contains the image url
-// each image has 2 srcs listed. the code below correctly slices the 1st of the 2
+/**  data-details css attribute is a string with a ton of information used when the row is expanded to display an image of the move
+ * this function parses the string for the stored src attribute which contains the image url
+ * each image has 2 srcs listed. the code below correctly slices the 1st of the 2
+ */
 const parseforHref = (string) => {
    const arr = string.split(" ");
 
