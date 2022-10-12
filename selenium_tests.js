@@ -28,7 +28,6 @@ async function selenTest(character) {
    const tableHeaders = await Promise.all(headerPromises);
 
    // loop through table IDs until no more tables are found
-
    const tablePromises = tableHeaders.map(async (_, tableNum) => {
       const tableID = `DataTables_Table_${tableNum}`;
 
@@ -42,7 +41,6 @@ async function selenTest(character) {
          return undefined;
       }
 
-      // table name is sometimes undefined without this console log
       const tableName = tableHeaders[tableNum + 3];
 
       characterObj[tableName] = {};
