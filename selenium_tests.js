@@ -138,8 +138,7 @@ main();
  * assignTableHeaders uses the driver to get the text from all h2 nodes, and returns an array of those strings.
  */
 const assignTableHeaders = async (driver, character) => {
-   //getting table header nodes
-
+   //fix cause ABA html is unique
    if (character === "A.B.A") {
       const headlineNodes = await driver.findElements(
          By.className("mw-headline")
@@ -151,8 +150,6 @@ const assignTableHeaders = async (driver, character) => {
    const h2Nodes = await driver.findElements(By.css("h2"));
    const headerPromises = h2Nodes.map((elem) => elem.getText());
    return Promise.all(headerPromises);
-
-   //creating array of table headers
 };
 
 /**
