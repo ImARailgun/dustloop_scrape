@@ -1,9 +1,13 @@
 import webdriver from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome.js";
+import fs from "fs";
+
+//TO DO:
+//CORRECT THE PARSING FOR WINGER IMAGES (url parsing for any move with 4+ hitbox images)
 
 const { By } = webdriver;
 
-async function selenTest(character) {
+async function selenTest(character, game) {
    const options = new chrome.Options();
    options.addArguments("--headless");
    options.addArguments("log-level=3");
@@ -13,26 +17,43 @@ async function selenTest(character) {
       .setChromeOptions(options)
       .build();
 
-   const url = `https://www.dustloop.com/w/GGACR/${character}/Frame_Data`;
+   const url = `https://www.dustloop.com/w/${game}/${character}/Frame_Data`;
 
    await driver.get(url);
 
    const characterObj = {};
    characterObj.name = character;
+   characterObj.game = game;
 
    await driver.sleep(1000);
 
-   //list of h2 elements
+   //array of tableHeaders to assign table names later on
    const tableHeaders = await assignTableHeaders(driver, character);
 
-   // loop through table IDs until no more tables are found
+   //System Data Table html labled seperately
+   if (character === "A.B.A") {
+      //A.B.A. tableHeaders are unique
+      const systemTables = await getSystemData(driver, 1).catch({});
+      characterObj["System Data"] = systemTables[0];
+   } else if (game === "GGST") {
+      //GGST has two system data tables with different table name html that cannot be scraped concurrently with other games
+      const systemTables = await getSystemData(driver, 2).catch({});
+      characterObj["System Data- Core Data"] = systemTables[0];
+      characterObj["System Data- Jump Data"] = systemTables[1];
+   } else {
+      const systemTables = await getSystemData(driver, 1).catch({});
+      characterObj[tableHeaders[2]] = systemTables[0];
+   }
+   console.log(`Scraped table System Data for ${character} from ${game}`);
+
+   //all ID'd Data Tables
    const tablePromises = tableHeaders.map(async (_, tableNum) => {
       const tableID = `DataTables_Table_${tableNum}`;
 
-      // tableHeaders.length is arbitrary. Once there are no more tables to scrape,
-      // the findElement() below will throw an error when "DataTables_Table_i" doesnt exist
       let tableNode;
 
+      // loop through table IDs until no more tables are found
+      // catch error once "DataTables_Table_i" doesnt exist
       try {
          tableNode = await driver.findElement(By.id(tableID));
       } catch (error) {
@@ -43,24 +64,22 @@ async function selenTest(character) {
 
       characterObj[tableName] = {};
 
-      // saving column headers
       const columnHeaders = await getColumnHeaders(tableNode);
 
-      // getting all row nodes for the table
       const rowNodes = await tableNode
          .findElement(By.css("tbody"))
          .findElements(By.css("tr"));
 
-      // looping through each row node to save the data
-
+      // scraping of each cell in each row in table
       const rowPromises = rowNodes.map((row) =>
          scrapeRow(row, tableName, columnHeaders)
       );
 
       const rows = await Promise.all(rowPromises);
 
-      console.log(`Scraped table ${tableName} for ${character}`);
+      console.log(`Scraped table ${tableName} for ${character} from ${game}`);
 
+      //array of objects with the scraped info for each row
       return rows;
    });
 
@@ -69,65 +88,167 @@ async function selenTest(character) {
 
    for (const rows of tables) {
       for (const scrapedInfo of rows) {
-         // assigning a row's object key to the move name (or input if no name)
          const rowObjKey =
             scrapedInfo.name && scrapedInfo.name !== ""
                ? scrapedInfo.name
                : scrapedInfo.input;
 
-         // adding the row to the table object
          const tableName = scrapedInfo.tableName;
 
+         // assigning each row object to the character object
          characterObj[tableName][rowObjKey] = scrapedInfo;
       }
    }
 
    await driver.quit();
+
+   const charJSONString = JSON.stringify(characterObj);
+   const fileName = `./characterObjs/${characterObj.game}/${characterObj.name}.json`;
+
+   await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
+      if (err) {
+         console.log(`error occured with: ${fileName}`);
+      }
+   });
+
    return characterObj;
 }
 
-//CREATE SEPERATE FUNCTION FOR ABA
-
-/**
- * main is the test case. Uncomment all characters if you want to blow up your CPU
- */
 const main = async () => {
-   const charNames = [
-      // "A.B.A",
-      // "Anji_Mito",
-      // "Axl_Low",
-      // "Baiken",
-      // "Bridget",
-      // "Chipp_Zanuff",
-      // "Dizzy",
-      // "Eddie",
-      // "Faust",
-      // "I-No",
-      // "Jam_Kuradoberi",
-      // "Johnny",
-      // "Justice",
-      // "Kliff_Undersn",
-      // "Ky_Kiske",
-      // "May",
-      "Millia_Rage",
-      // "Order-Sol",
-      // "Potemkin",
-      // "Robo-Ky",
-      // "Slayer",
-      // "Sol_Badguy",
-      // "Testament",
-      // "Venom",
-      // "Zappa",
+   const charGGACR = [
+      // ["A.B.A", "GGACR"],
+      // ["Anji_Mito", "GGACR"],
+      // ["Axl_Low", "GGACR"],
+      // ["Baiken", "GGACR"],
+      // ["Bridget", "GGACR"],
+      // ["Chipp_Zanuff", "GGACR"],
+      // ["Dizzy", "GGACR"],
+      // ["Eddie", "GGACR"],
+      // ["Faust", "GGACR"],
+      // ["I-No", "GGACR"],
+      // ["Jam_Kuradoberi", "GGACR"],
+      // ["Johnny", "GGACR"],
+      // ["Justice", "GGACR"],
+      // ["Kliff_Undersn", "GGACR"],
+      // ["Ky_Kiske", "GGACR"],
+      // ["May", "GGACR"],
+      // ["Millia_Rage", "GGACR"],
+      // ["Order-Sol", "GGACR"],
+      // ["Potemkin", "GGACR"],
+      // ["Robo-Ky", "GGACR"],
+      // ["Slayer", "GGACR"],
+      // ["Sol_Badguy", "GGACR"],
+      // ["Testament", "GGACR"],
+      // ["Venom", "GGACR"],
+      // ["Zappa", "GGACR"],
    ];
 
-   const tests = charNames.map((elem) => selenTest(elem));
+   const charGGXRDR2 = [
+      // ["Answer", "GGXRD-R2"],
+      // ["Axl_Low", "GGXRD-R2"],
+      // ["Baiken", "GGXRD-R2"],
+      // ["Bedman", "GGXRD-R2"],
+      // ["Chipp_Zanuff", "GGXRD-R2"],
+      // ["Dizzy", "GGXRD-R2"],
+      // ["Elphelt_Valentine", "GGXRD-R2"],
+      // ["Faust", "GGXRD-R2"],
+      // ["I-No", "GGXRD-R2"],
+      // ["Jack-O", "GGXRD-R2"],
+      // ["Jam_Kuradoberi", "GGXRD-R2"],
+      // ["Johnny", "GGXRD-R2"],
+      // ["Kum_Haehyun", "GGXRD-R2"],
+      // ["Ky_Kiske", "GGXRD-R2"],
+      // ["Leo_Whitefang", "GGXRD-R2"],
+      // ["May", "GGXRD-R2"],
+      ["Millia_Rage", "GGXRD-R2"],
+      // ["Potemkin", "GGXRD-R2"],
+      // ["Ramlethal_Valentine", "GGXRD-R2"],
+      // ["Raven", "GGXRD-R2"],
+      // ["Sin_Kiske", "GGXRD-R2"],
+      // ["Slayer", "GGXRD-R2"],
+      // ["Sol_Badguy", "GGXRD-R2"],
+      // ["Venom", "GGXRD-R2"],
+      // ["Zato-1", "GGXRD-R2"],
+   ];
+
+   const charBBCF = [
+      // ["Amane_Nishiki", "BBCF"],
+      // ["Arakune", "BBCF"],
+      // ["Azrael", "BBCF"],
+      // ["Bang_Shishigami", "BBCF"],
+      // ["Bullet", "BBCF"],
+      // ["Carl_Clover", "BBCF"],
+      // ["Celica_A._Mercury", "BBCF"],
+      // ["Es", "BBCF"],
+      // ["Hakumen", "BBCF"],
+      // ["Hazama", "BBCF"],
+      // ["Hibiki_Kohaku", "BBCF"],
+      // ["Iron_Tager", "BBCF"],
+      // ["Izanami", "BBCF"],
+      ["Izayoi", "BBCF"],
+      // ["Jin_Kisaragi", "BBCF"],
+      // ["Jubei", "BBCF"],
+      // ["Kagura_Mutsuki", "BBCF"],
+      // ["Kokonoe", "BBCF"],
+      // ["Lambda-11", "BBCF"],
+      // ["Litchi_Faye_Ling", "BBCF"],
+      // ["Mai_Natsume", "BBCF"],
+      // ["Makoto_Nanaya", "BBCF"],
+      // ["Mu-12", "BBCF"],
+      // ["Naoto_Kurogane", "BBCF"],
+      // ["Nine_the_Phantom", "BBCF"],
+      // ["Noel_Vermillion", "BBCF"],
+      // ["Nu-13", "BBCF"],
+      // ["Platinum_the_Trinity", "BBCF"],
+      // ["Rachel_Alucard", "BBCF"],
+      // ["Ragna_the_Bloodedge", "BBCF"],
+      // ["Relius_Clover", "BBCF"],
+      // ["Susanoo", "BBCF"],
+      // ["Taokaka", "BBCF"],
+      // ["Tsubaki_Yayoi", "BBCF"],
+      // ["Valkenhayn_R._Hellsing", "BBCF"],
+      // ["Yuuki_Terumi", "BBCF"],
+   ];
+
+   const charGGST = [
+      // ["Anji_Mito", "GGST"],
+      // ["Axl_Low", "GGST"],
+      // ["Baiken", "GGST"],
+      // ["Bridget", "GGST"],
+      // ["Chipp_Zanuff", "GGST"],
+      // ["Faust", "GGST"],
+      // ["Giovanna", "GGST"],
+      // ["Goldlewis_Dickinson", "GGST"],
+      // ["Happy_Chaos", "GGST"],
+      // ["I-No", "GGST"],
+      // ["Jack-O", "GGST"],
+      // ["Ky_Kiske", "GGST"],
+      // ["Leo_Whitefang", "GGST"],
+      // ["May", "GGST"],
+      ["Millia_Rage", "GGST"],
+      // ["Nagoriyuki", "GGST"],
+      // ["Potemkin", "GGST"],
+      // ["Ramlethal_Valentine", "GGST"],
+      // ["Sol_Badguy", "GGST"],
+      // ["Testament", "GGST"],
+      // ["Zato-1", "GGST"],
+   ];
+
+   const charTests = charGGACR
+      .concat(charGGXRDR2)
+      .concat(charBBCF)
+      .concat(charGGST);
+
+   const tests = charTests.map((elem) => selenTest(elem[0], elem[1]));
 
    const results = await Promise.all(tests);
 
    for (const char of results) {
       console.log(char.name);
+      console.log(char.game);
       for (const key of Object.keys(char)) {
-         if (char[key] !== char.name) console.log(key, Object.keys(char[key]));
+         if (key !== "name" && key !== "game")
+            console.log(key, Object.keys(char[key]));
       }
    }
 };
@@ -138,7 +259,7 @@ main();
  * assignTableHeaders uses the driver to get the text from all h2 nodes, and returns an array of those strings.
  */
 const assignTableHeaders = async (driver, character) => {
-   //fix cause ABA html is unique
+   //fix cause ABA's html is unique
    if (character === "A.B.A") {
       const headlineNodes = await driver.findElements(
          By.className("mw-headline")
@@ -153,6 +274,59 @@ const assignTableHeaders = async (driver, character) => {
 };
 
 /**
+ * getSystemData returns an object scraped from the system data table
+ */
+const getSystemData = async (driver, num) => {
+   const tableNodes = await driver.findElements(
+      By.className("cargoTable noMerge sortable jquery-tablesorter")
+   );
+
+   const tablePromises = tableNodes.map(async (tableNode) => {
+      const systemData = {};
+
+      const headerNodes = await tableNode
+         .findElement(By.css("thead"))
+         .findElements(By.css("th"));
+
+      const headerPromises = headerNodes.map((node) => node.getText());
+
+      const headerTexts = await Promise.all(headerPromises);
+
+      const rowNodes = await tableNode
+         .findElement(By.css("tbody"))
+         .findElements(By.css("tr"));
+
+      const rowPromises = rowNodes.map((node) =>
+         node.findElements(By.css("td"))
+      );
+      //rowNodes.map((node) => node.getText());
+      const rowAndCellNodes = await Promise.all(rowPromises);
+
+      for (const row of rowAndCellNodes) {
+         const rowText = [];
+         for (const cell of row) {
+            const text = await cell.getText();
+            rowText.push(text);
+         }
+         if (rowAndCellNodes.length > 1) {
+            systemData[rowText[0]] = {};
+         }
+         rowText.forEach((text, index) => {
+            if (rowAndCellNodes.length > 1) {
+               systemData[rowText[0]][headerTexts[index]] = text;
+            } else {
+               systemData[headerTexts[index].toLowerCase()] = text;
+            }
+         });
+      }
+
+      return systemData;
+   });
+
+   return await Promise.all(tablePromises.slice(0, num));
+};
+
+/**
  * getColumnHeaders returns an array of column headers for a given table node.
  */
 const getColumnHeaders = async (tableNode) => {
@@ -162,11 +336,13 @@ const getColumnHeaders = async (tableNode) => {
 
    const header = columnNodes.map((node) => node.getText());
 
-   return Promise.all(header);
+   const texts = await Promise.all(header);
+
+   return texts.map((elem) => elem.toLowerCase());
 };
 
 /**
- * scrapeRow returns an array with every cell in the row scraped in the following format: [columnHeader, cellData]
+ * scrapeRow returns an object with every cell in the row scraped in the following format: {columnHeader: cellData}
  */
 const scrapeRow = async (row, tableName, columnHeaders) => {
    const scrapedInfo = {};
@@ -192,12 +368,14 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
    }
 
    scrapedInfo.tableName = tableName;
+
    return scrapedInfo;
 };
 
-/**  data-details css attribute is a string with a ton of information used when the row is expanded to display an image of the move
- * this function parses the string for the stored src attribute which contains the image url
- * each image has 2 srcs listed. the code below correctly slices the 1st of the 2
+/**  parseforHref takes a string of the data-details css attribute, and returns an object with image URLs.
+ *   the data-details css is a long string of html attributes.
+ *   This string is used whenever the user clicks a row to expand it and show images.
+ *   Since the images are not displayed on the intital page load, the data-details string is sparsed for the image src urls.
  */
 const parseforHref = (string) => {
    const arr = string.split(" ");

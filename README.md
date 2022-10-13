@@ -1,18 +1,13 @@
 # dustloop_scrape
 
-only for +r atm
+tested GGACR, GGXRD-R2, BBCF, and GGST so far
 
-1. (done) scrape dustloop frame data and save to a local object for each character
+1. (done) scrape dustloop frame data and create an object for each character
 
-(fix winger img url parsing)
+(fix url parsing for moves with 4+ hitbox image urls)
 
-2. upload character objects to a database
+2. (done) save local object as .json
 
-3. create an API to retrieve frame data from the database
+3. create discord bot that takes requests and retrieves frame data from .json's
 
-4. create a discord bot to call API and display retrieved frame data
-
-5. add functionality for Xrd and Strive
-   -just change URL from 'GGACR' to 'GGXRD-R2' (it's that easy)
-
-(stretch goal: system data, gattlings)
+(stretch goal: gattlings/revolvers)
