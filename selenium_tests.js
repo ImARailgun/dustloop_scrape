@@ -100,16 +100,23 @@ async function selenTest(character, game) {
       }
    }
 
+   const gattlingTables = await getGattlingTables(driver);
+
+   for (const table of gattlingTables) {
+      characterObj[table[0]] = table[1];
+      console.log(`Scraped table ${table[0]} for ${character} from ${game}`);
+   }
+
    await driver.quit();
 
    const charJSONString = JSON.stringify(characterObj);
    const fileName = `./characterObjs/${characterObj.game}/${characterObj.name}.json`;
 
-   await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
-      if (err) {
-         console.log(`error occured with: ${fileName}`);
-      }
-   });
+   // await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
+   //    if (err) {
+   //       console.log(`error occured with: ${fileName}`);
+   //    }
+   // });
 
    return characterObj;
 }
@@ -160,7 +167,7 @@ const main = async () => {
       // ["Ky_Kiske", "GGXRD-R2"],
       // ["Leo_Whitefang", "GGXRD-R2"],
       // ["May", "GGXRD-R2"],
-      ["Millia_Rage", "GGXRD-R2"],
+      // ["Millia_Rage", "GGXRD-R2"],
       // ["Potemkin", "GGXRD-R2"],
       // ["Ramlethal_Valentine", "GGXRD-R2"],
       // ["Raven", "GGXRD-R2"],
@@ -225,7 +232,7 @@ const main = async () => {
       // ["Ky_Kiske", "GGST"],
       // ["Leo_Whitefang", "GGST"],
       // ["May", "GGST"],
-      ["Millia_Rage", "GGST"],
+      // ["Millia_Rage", "GGST"],
       // ["Nagoriyuki", "GGST"],
       // ["Potemkin", "GGST"],
       // ["Ramlethal_Valentine", "GGST"],
@@ -370,6 +377,89 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
    scrapedInfo.tableName = tableName;
 
    return scrapedInfo;
+};
+
+const getGattlingTables = async (driver) => {
+   const tableNodes = await driver.findElements(
+      By.xpath(
+         "//table[@style='text-align: center; margin: 1em auto 1em auto;']"
+      )
+   );
+
+   const tablePromises = tableNodes.map(async (table) => {
+      const scrapedTable = {};
+      const caption = await table.findElement(By.css("caption")).getText();
+      const rowNodes = await table
+         .findElement(By.css("tbody"))
+         .findElements(By.css("tr"));
+
+      const rowPromises = rowNodes.map(async (rowNode, i) => {
+         if (i === 0) {
+            const headerNodes = await rowNode.findElements(By.css("th"));
+            const headerTexts = ["Move"];
+
+            for (const node of headerNodes) {
+               const text = await node.getText();
+               if (text !== "") {
+                  headerTexts.push(text);
+               }
+            }
+
+            return headerTexts;
+         }
+
+         const rowText = [];
+
+         let firstColumnText = await rowNode
+            .findElement(By.css("th"))
+            .getText();
+
+         //clean any exponents in text
+         if (firstColumnText.indexOf("\n") !== -1) {
+            firstColumnText = firstColumnText.slice(
+               0,
+               firstColumnText.indexOf("\n")
+            );
+         }
+
+         rowText.push(firstColumnText);
+
+         const otherCellNodes = await rowNode.findElements(By.css("td"));
+
+         for (const node of otherCellNodes) {
+            let text = await node.getText();
+
+            //provide info on legend symbols in text
+            if (text.indexOf("-") !== -1 && text.length > 3) {
+               text = text.replaceAll("-", "only on hit");
+            }
+            if (text.indexOf("+") !== -1) {
+               text = text.replaceAll("+", "+ on whiff");
+            }
+
+            rowText.push(text);
+         }
+
+         return rowText;
+      });
+
+      const rowTexts = await Promise.all(rowPromises);
+
+      for (let i = 1; i < rowTexts.length; i++) {
+         const rowObj = {};
+
+         rowTexts[i].forEach((cell, column) => {
+            if (column !== 0) {
+               rowObj[rowTexts[0][column]] = cell;
+            }
+         });
+         scrapedTable[rowTexts[i][0]] = rowObj;
+      }
+
+      return [caption, scrapedTable];
+   });
+
+   return await Promise.all(tablePromises);
 };
 
 /**  parseforHref takes a string of the data-details css attribute, and returns an object with image URLs.
