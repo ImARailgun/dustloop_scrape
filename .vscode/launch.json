@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\selenium_tests.js",
+            "program": "${workspaceFolder}\\dustloop_scrape.js",
             // "console": "internalConsole"
             "console": "integratedTerminal"
         }

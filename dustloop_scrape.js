@@ -7,7 +7,7 @@ import fs from "fs";
 
 const { By } = webdriver;
 
-async function selenTest(character, game) {
+async function dustloopScrape(character, game) {
    const options = new chrome.Options();
    options.addArguments("--headless");
    options.addArguments("log-level=3");
@@ -102,28 +102,41 @@ async function selenTest(character, game) {
 
    const gattlingTables = await getGattlingTables(driver);
 
+   let modeIndex = 0;
+   const zappaArr = ["No Summon", "Dog", "Triplets", "Sword", "Raou"];
+   const abaArr = ["Normal Mode", "Moroha Mode", "Goku Moroha Mode"];
+
    for (const table of gattlingTables) {
-      characterObj[table[0]] = table[1];
+      if (character === "Zappa") {
+         let objKey = zappaArr[modeIndex] + ": " + table[0];
+         if (characterObj[objKey]) {
+            modeIndex++;
+         }
+         objKey = zappaArr[modeIndex] + ": " + table[0];
+
+         characterObj[objKey] = table[1];
+      } else if (character === "A.B.A") {
+         let objKey = abaArr[modeIndex] + ": " + table[0];
+         if (characterObj[objKey]) {
+            modeIndex++;
+         }
+         objKey = abaArr[modeIndex] + ": " + table[0];
+
+         characterObj[objKey] = table[1];
+      } else {
+         characterObj[table[0]] = table[1];
+      }
       console.log(`Scraped table ${table[0]} for ${character} from ${game}`);
    }
 
    await driver.quit();
-
-   const charJSONString = JSON.stringify(characterObj);
-   const fileName = `./characterObjs/${characterObj.game}/${characterObj.name}.json`;
-
-   // await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
-   //    if (err) {
-   //       console.log(`error occured with: ${fileName}`);
-   //    }
-   // });
 
    return characterObj;
 }
 
 const main = async () => {
    const charGGACR = [
-      // ["A.B.A", "GGACR"],
+      ["A.B.A", "GGACR"],
       // ["Anji_Mito", "GGACR"],
       // ["Axl_Low", "GGACR"],
       // ["Baiken", "GGACR"],
@@ -192,7 +205,7 @@ const main = async () => {
       // ["Hibiki_Kohaku", "BBCF"],
       // ["Iron_Tager", "BBCF"],
       // ["Izanami", "BBCF"],
-      ["Izayoi", "BBCF"],
+      // ["Izayoi", "BBCF"],
       // ["Jin_Kisaragi", "BBCF"],
       // ["Jubei", "BBCF"],
       // ["Kagura_Mutsuki", "BBCF"],
@@ -246,7 +259,7 @@ const main = async () => {
       .concat(charBBCF)
       .concat(charGGST);
 
-   const tests = charTests.map((elem) => selenTest(elem[0], elem[1]));
+   const tests = charTests.map((elem) => dustloopScrape(elem[0], elem[1]));
 
    const results = await Promise.all(tests);
 
@@ -257,6 +270,15 @@ const main = async () => {
          if (key !== "name" && key !== "game")
             console.log(key, Object.keys(char[key]));
       }
+
+      const charJSONString = JSON.stringify(char);
+      const fileName = `./characterObjs/${char.game}/${char.name}.json`;
+
+      await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
+         if (err) {
+            console.log(`error occured with: ${fileName}`);
+         }
+      });
    }
 };
 
@@ -379,87 +401,102 @@ const scrapeRow = async (row, tableName, columnHeaders) => {
    return scrapedInfo;
 };
 
+/**
+ * getGattlingTables returns an array with the caption and scraped data (object) for each gattling/revolver table
+ */
 const getGattlingTables = async (driver) => {
    const tableNodes = await driver.findElements(
       By.xpath(
-         "//table[@style='text-align: center; margin: 1em auto 1em auto;']"
+         "//table[@style='text-align: center; margin: 1em auto 1em auto;' or @style='margin: 1em auto 1em auto;text-align:center']"
       )
    );
 
    const tablePromises = tableNodes.map(async (table) => {
-      const scrapedTable = {};
-      const caption = await table.findElement(By.css("caption")).getText();
-      const rowNodes = await table
-         .findElement(By.css("tbody"))
-         .findElements(By.css("tr"));
+      try {
+         const scrapedTable = {};
+         const caption = await table.findElement(By.css("caption")).getText();
 
-      const rowPromises = rowNodes.map(async (rowNode, i) => {
-         if (i === 0) {
-            const headerNodes = await rowNode.findElements(By.css("th"));
-            const headerTexts = ["Move"];
+         //Happy Chaos unique html
+         if (caption === "Steady Aim Shoot Cancel Frame Data") {
+            return undefined;
+         }
 
-            for (const node of headerNodes) {
-               const text = await node.getText();
-               if (text !== "") {
-                  headerTexts.push(text);
+         const rowNodes = await table
+            .findElement(By.css("tbody"))
+            .findElements(By.css("tr"));
+
+         const rowPromises = rowNodes.map(async (rowNode, i) => {
+            if (i === 0) {
+               const headerNodes = await rowNode.findElements(By.css("th"));
+               const headerTexts = ["Move"];
+
+               for (const node of headerNodes) {
+                  const text = await node.getText();
+                  if (text !== "") {
+                     headerTexts.push(text);
+                  }
                }
+
+               return headerTexts;
             }
 
-            return headerTexts;
-         }
+            const rowText = [];
 
-         const rowText = [];
+            let firstColumnText = await rowNode
+               .findElement(By.css("th"))
+               .getText();
 
-         let firstColumnText = await rowNode
-            .findElement(By.css("th"))
-            .getText();
-
-         //clean any exponents in text
-         if (firstColumnText.indexOf("\n") !== -1) {
-            firstColumnText = firstColumnText.slice(
-               0,
-               firstColumnText.indexOf("\n")
-            );
-         }
-
-         rowText.push(firstColumnText);
-
-         const otherCellNodes = await rowNode.findElements(By.css("td"));
-
-         for (const node of otherCellNodes) {
-            let text = await node.getText();
-
-            //provide info on legend symbols in text
-            if (text.indexOf("-") !== -1 && text.length > 3) {
-               text = text.replaceAll("-", "only on hit");
-            }
-            if (text.indexOf("+") !== -1) {
-               text = text.replaceAll("+", "+ on whiff");
+            //clean any exponents in text
+            if (firstColumnText.indexOf("\n") !== -1) {
+               firstColumnText = firstColumnText.slice(
+                  0,
+                  firstColumnText.indexOf("\n")
+               );
             }
 
-            rowText.push(text);
-         }
+            rowText.push(firstColumnText);
 
-         return rowText;
-      });
+            const otherCellNodes = await rowNode.findElements(By.css("td"));
 
-      const rowTexts = await Promise.all(rowPromises);
+            for (const node of otherCellNodes) {
+               let text = await node.getText();
 
-      for (let i = 1; i < rowTexts.length; i++) {
-         const rowObj = {};
+               //provide info on legend symbols in text
+               if (text.indexOf("-") !== -1 && text.length > 3) {
+                  text = text.replaceAll("-", "only on hit");
+               }
+               if (text.indexOf("+") !== -1) {
+                  text = text.replaceAll("+", "+ on whiff");
+               }
 
-         rowTexts[i].forEach((cell, column) => {
-            if (column !== 0) {
-               rowObj[rowTexts[0][column]] = cell;
+               rowText.push(text);
             }
+
+            return rowText;
          });
-         scrapedTable[rowTexts[i][0]] = rowObj;
-      }
 
-      return [caption, scrapedTable];
+         const rowTexts = await Promise.all(rowPromises);
+
+         for (let i = 1; i < rowTexts.length; i++) {
+            const rowObj = {};
+
+            rowTexts[i].forEach((cell, column) => {
+               if (column !== 0) {
+                  rowObj[rowTexts[0][column]] = cell;
+               }
+            });
+            scrapedTable[rowTexts[i][0]] = rowObj;
+         }
+
+         return [caption, scrapedTable];
+      } catch {
+         return undefined;
+      }
    });
 
-   return await Promise.all(tablePromises);
+   const result = await Promise.all(tablePromises);
+
+   return result.filter((elem) => elem !== undefined);
 };
 
 /**  parseforHref takes a string of the data-details css attribute, and returns an object with image URLs.

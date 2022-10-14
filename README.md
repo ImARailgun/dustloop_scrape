@@ -9,5 +9,3 @@ tested GGACR, GGXRD-R2, BBCF, and GGST so far
 2. (done) save local object as .json
 
 3. create discord bot that takes requests and retrieves frame data from .json's
-
-(stretch goal: gattlings/revolvers)
