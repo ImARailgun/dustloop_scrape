@@ -32,3 +32,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# linter
+.eslintrc.json
+
+# privacy
+config.json
+
+#ts
+/built

@@ -2,10 +2,10 @@
 
 tested GGACR, GGXRD-R2, BBCF, and GGST so far
 
-1. (done) scrape dustloop frame data and create an object for each character
+Dustloop_Scrape
 
-(fix url parsing for moves with 4+ hitbox image urls)
+1. Scrape dustloop frame data and create an object for each character and save as .json
 
-2. (done) save local object as .json
+Discord_Bot
 
-3. create discord bot that takes requests and retrieves frame data from .json's
+2. Discord bot that takes requests, retrieves frame data from .json's, and displays in embedded message

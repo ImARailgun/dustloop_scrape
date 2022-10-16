@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "outDir": "./built",
+      "allowJs": true,
+      "target": "es5",
+      "esModuleInterop": true,
+      "module": "es2020",
+      "moduleResolution": "node",
+      "skipDefaultLibCheck": true,
+      "skipLibCheck": true
+    },
+    "include": ["./**/*"],
+    "exclude": ["./node_modules/**/*", "./built/**/*"]
+
+}

@@ -1,9 +1,10 @@
 import webdriver from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome.js";
+// eslint-disable-next-line
 import fs from "fs";
 
-//TO DO:
-//CORRECT THE PARSING FOR WINGER IMAGES (url parsing for any move with 4+ hitbox images)
+// TO DO:
+// CORRECT THE PARSING FOR WINGER IMAGES (url parsing for any move with 4+ hitbox images)
 
 const { By } = webdriver;
 
@@ -27,16 +28,16 @@ async function dustloopScrape(character, game) {
 
    await driver.sleep(1000);
 
-   //array of tableHeaders to assign table names later on
+   // array of tableHeaders to assign table names later on
    const tableHeaders = await assignTableHeaders(driver, character);
 
-   //System Data Table html labled seperately
+   // System Data Table html labled seperately
    if (character === "A.B.A") {
-      //A.B.A. tableHeaders are unique
+      // A.B.A. tableHeaders are unique
       const systemTables = await getSystemData(driver, 1).catch({});
       characterObj["System Data"] = systemTables[0];
    } else if (game === "GGST") {
-      //GGST has two system data tables with different table name html that cannot be scraped concurrently with other games
+      // GGST has two system data tables with different table name html that cannot be scraped concurrently with other games
       const systemTables = await getSystemData(driver, 2).catch({});
       characterObj["System Data- Core Data"] = systemTables[0];
       characterObj["System Data- Jump Data"] = systemTables[1];
@@ -46,7 +47,7 @@ async function dustloopScrape(character, game) {
    }
    console.log(`Scraped table System Data for ${character} from ${game}`);
 
-   //all ID'd Data Tables
+   // all ID'd Data Tables
    const tablePromises = tableHeaders.map(async (_, tableNum) => {
       const tableID = `DataTables_Table_${tableNum}`;
 
@@ -79,7 +80,7 @@ async function dustloopScrape(character, game) {
 
       console.log(`Scraped table ${tableName} for ${character} from ${game}`);
 
-      //array of objects with the scraped info for each row
+      // array of objects with the scraped info for each row
       return rows;
    });
 
@@ -136,7 +137,7 @@ async function dustloopScrape(character, game) {
 
 const main = async () => {
    const charGGACR = [
-      ["A.B.A", "GGACR"],
+      // ["A.B.A", "GGACR"],
       // ["Anji_Mito", "GGACR"],
       // ["Axl_Low", "GGACR"],
       // ["Baiken", "GGACR"],
@@ -152,7 +153,7 @@ const main = async () => {
       // ["Kliff_Undersn", "GGACR"],
       // ["Ky_Kiske", "GGACR"],
       // ["May", "GGACR"],
-      // ["Millia_Rage", "GGACR"],
+      ["Millia_Rage", "GGACR"],
       // ["Order-Sol", "GGACR"],
       // ["Potemkin", "GGACR"],
       // ["Robo-Ky", "GGACR"],
@@ -267,18 +268,19 @@ const main = async () => {
       console.log(char.name);
       console.log(char.game);
       for (const key of Object.keys(char)) {
-         if (key !== "name" && key !== "game")
+         if (key !== "name" && key !== "game") {
             console.log(key, Object.keys(char[key]));
+         }
       }
 
-      const charJSONString = JSON.stringify(char);
-      const fileName = `./characterObjs/${char.game}/${char.name}.json`;
+      // const charJSONString = JSON.stringify(char);
+      // const fileName = `./characterObjs/${char.game}/${char.name}.json`;
 
-      await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
-         if (err) {
-            console.log(`error occured with: ${fileName}`);
-         }
-      });
+      // await fs.writeFile(fileName, charJSONString, "utf-8", function (err) {
+      //    if (err) {
+      //       console.log(`error occured with: ${fileName}`);
+      //    }
+      // });
    }
 };
 
@@ -288,7 +290,7 @@ main();
  * assignTableHeaders uses the driver to get the text from all h2 nodes, and returns an array of those strings.
  */
 const assignTableHeaders = async (driver, character) => {
-   //fix cause ABA's html is unique
+   // fix cause ABA's html is unique
    if (character === "A.B.A") {
       const headlineNodes = await driver.findElements(
          By.className("mw-headline")
@@ -328,7 +330,7 @@ const getSystemData = async (driver, num) => {
       const rowPromises = rowNodes.map((node) =>
          node.findElements(By.css("td"))
       );
-      //rowNodes.map((node) => node.getText());
+      // rowNodes.map((node) => node.getText());
       const rowAndCellNodes = await Promise.all(rowPromises);
 
       for (const row of rowAndCellNodes) {
@@ -416,7 +418,7 @@ const getGattlingTables = async (driver) => {
          const scrapedTable = {};
          const caption = await table.findElement(By.css("caption")).getText();
 
-         //Happy Chaos unique html
+         // Happy Chaos unique html
          if (caption === "Steady Aim Shoot Cancel Frame Data") {
             return undefined;
          }
@@ -446,7 +448,7 @@ const getGattlingTables = async (driver) => {
                .findElement(By.css("th"))
                .getText();
 
-            //clean any exponents in text
+            // clean any exponents in text
             if (firstColumnText.indexOf("\n") !== -1) {
                firstColumnText = firstColumnText.slice(
                   0,
@@ -461,7 +463,7 @@ const getGattlingTables = async (driver) => {
             for (const node of otherCellNodes) {
                let text = await node.getText();
 
-               //provide info on legend symbols in text
+               // provide info on legend symbols in text
                if (text.indexOf("-") !== -1 && text.length > 3) {
                   text = text.replaceAll("-", "only on hit");
                }

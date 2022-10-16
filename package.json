@@ -2,11 +2,21 @@
   "name": "dustloop_scrape",
   "license": "MIT",
   "scripts": {
-    "start": "node selenium_tests.js"
+    "start": "node selenium_tests.js",
+    "build": "tsc",
+    "deploy": "node built/discord_bot/deploy-commands.js"
   },
   "dependencies": {
+    "discord.js": "^14.6.0",
+    "fzf": "^0.5.1",
     "prettier": "^2.7.1",
     "selenium-webdriver": "^4.5.0"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "eslint": "^8.25.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  }
+
 }
