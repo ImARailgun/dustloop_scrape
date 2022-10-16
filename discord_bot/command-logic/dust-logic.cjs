@@ -4,6 +4,8 @@
 // if key = image, have seperate logic that creates the image portion of imbed instead of assigning to display array
 // make default imagePortion something that doesnt crash if there was no image key
 
+// add dustloop page for character as a link in the title
+
 module.exports = {
    async buildEmbed(request, dataObj) {
       const Title = request.replaceAll(";", " - ");
@@ -54,7 +56,7 @@ module.exports = {
                   width: 50,
                },
                // footer: {
-               //    text: "\u3000".repeat(10) + "|",
+               //    text: "",
                // },
             },
          ],
