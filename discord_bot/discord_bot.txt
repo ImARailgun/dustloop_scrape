@@ -1,0 +1,59 @@
+Request structure (no auto complete (seperate args with .)):
+
+!get [arg1] [arg2 (optional)] [arg3 (optional)] [arg4 (optional)]
+
+[arg1- game] (return list of characters in game folder directory) (if error, return list of game folders in directory)
+[arg2- character] (return list of tables in character.json) (if error, return list of characters in game folder sdirectory)
+[arg3- table] (return all info in table in slideshow with arrow button) (if error, return list of tables in character.json)
+[arg4- move name] (return all info in slideshow starting at the move name (if error, would just start on index 0)]
+
+If typeof table.key === string, return all table info on one slide.
+If object, one key per slide
+
+when iterating through the table.move object, if key === Image, use url to display image
+
+Discord.js
+
+
+
+
+
+
+Button structure:
+
+command for each game> returns buttons with each character
+
+pressing a character button edits message to return buttons with each table for that character
+
+pressing a table button edits message to return table information (slides for nested objects or all info for nested strings)
+
+-probably possible to dynamically generate buttons
+
+
+Best structure (not pausible)
+-autocomplete game, then makes a set of choices for characters> tables
+
+-not possible to dynamically generate choices
+
+
+
+
+
+
+-game (dir)
+    -characters (dir)
+
+
+
+
+Three options:
+-create array with all possible keys [game/character/table/move]
+
+    1.Fuzzy match an input string with all possible keys    
+    2.Auto complete logic to allow for tab completetion of each arg
+        -before the first "/", only game is shown
+        -after first "/", characters from that are shown
+
+-if 1. and 2. dont work:
+
+3. Button revolution
