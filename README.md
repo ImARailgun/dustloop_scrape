@@ -8,4 +8,4 @@ Dustloop_Scrape
 
 Discord_Bot
 
-2. Discord bot that takes requests, retrieves frame data from .json's, and displays in embedded message
+2. Discord bot that "/dust", retrieves frame data from .json's, and displays in embedded message
